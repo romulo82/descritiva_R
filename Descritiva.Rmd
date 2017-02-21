@@ -1,0 +1,90 @@
+---
+title: "Estatística Descritiva com R"
+author: "Rômulo Coutinho Araújo"
+output: pdf_document
+---
+
+## 1. RESUMO DE DADOS
+
+#### TIPOS DE VARIÁVEIS
+
+Basicamente, temos dois tipos principais de variáveis: as *qualitativas* e as *quantitativas*. 
+
+As variáveis qualitativas subdividem-se em **nominal**, que somente identifica uma das realizações de uma variável, como ocorre no nome de uma pessoa, CPF ou número de telefone, por exemplo; **ordinal**, quando, além da identificação das realizações de uma variável, é possível ordená-las, como na variável escolaridade, por exemplo.
+
+As variáveis quantitativas são classificadas em **discretas**, cujos possíveis valores formam um conjunto finito ou enumerável de números, resultado geralmente de uma contagem, como ocorre na variável 'anos completos de experiência', por exemplo; e também é possível classificar as variáveis quantitativas em **contínuas**, as quais possuem realizações a partir dos números reais, o que ocorre gereamente a partir de medições, como altura, peso, etc.
+
+Tais tipos de variáveis definem técnicas próprias para resumo da informação, e algumas vezes tais técnicas são adaptáveis para diferentes tipos de variáveis.
+
+#### DISTRIBUIÇÕES DE FREQUÊNCIAS
+
+A distribuição de frequências é o primeiro panorama sobre a(s) varável(eis) analisada(s), e mostra o comportamento de suas possíveis realizações.
+
+Exemplo de tabela de frequências utilizando os dados nativos do R, arquivo *mtcars*, do qual extraímos a informação do número de cilindros de cada modelo de veículo:
+
+```{r, warning=FALSE}
+library(knitr)
+library(pander)
+pander(mtcars, caption = 
+        "Dados sobre Modelos de Veículos (mtcars)",split.table = Inf)
+```
+
+
+```{r}
+dados <- as.data.frame(table(mtcars$cyl))
+names(dados) <- c("Cilindros", "Frequência")
+dados$Proporção <- round(dados$Frequência/sum(dados$Frequência),2)
+dados$Porcentagem <- round(dados$Proporção*100,2)
+dados2 <- data.frame(Cilindros="Total", Frequência=sum(dados$Frequência), Proporção=sum(dados$Proporção),Porcentagem=sum(dados$Porcentagem))
+dados <- merge(dados,dados2, all=T)
+pander(dados, caption = 
+        "Frequência para o Número de Cilindros (mtcars)",split.table = Inf)
+```
+
+Os dados de proporção, ou porcentagem, são bastante úteis na comparação com pesquisas distintas, o que pode ser inviável apenas com o frequência absoluta.
+
+No caso de contruir tabela de distribuição para variáveis contínuas (ou discreta com grande variabilidade), usam-se intervalos para que os dados sejam agrupados, observando sempre que o número de intervalos define o quanto de informação será perdida nesse processo, ou seja, quanto menos intervalos, mais informação perdida, porém, um alto número de intervalos implica na redução da clareza na informação; portanto, é preciso encontrar um equilíbrio quanto à quantidade de intervalos usados. 
+
+É possível criar uma tabela de frequência usando algumas regras para determinação do número de classes (o que não invalida o uso do bom senso):
+
+a) Regra de Sturges (Regra do Logaritmo): $k=1+3.3log(n)$
+
+b) Regra da Potência de 2: $k=$ menor valor inteiro tal que $2^k \geq n$
+
+c) Regra da Raíz Quadrada: $k= \sqrt{n}$
+
+A partir do conjunto de dados *mtcars*, podemos contruir uma tabela de frequência da variável *potência* (*hp*). 
+De início, vamos precisar da amplitude total do conjunto de dados:
+```{r}
+(amp <- max(mtcars$hp)-min(mtcars$hp)) # Amplitude
+```
+
+Para o cálculo da amplitude de cada classe, usamos o valor de *k* (número de classes) a partir da Regra de Sturges:
+
+```{r}
+(k <- 1+3.3*log(length(mtcars$hp)))
+```
+
+O valor da amplitude de cada classe é então dado por (arredondado):
+
+```{r}
+(h <- ceiling(amp/k))
+```
+
+São criadas abaixo as classes que dividirão a tabela e sua apresentação:
+
+```{r}
+classe <- seq(min(mtcars$hp),max(mtcars$hp)+16, by=h) #Soma-se 16 ao máximo para
+# termos um valor divisível por 23.
+classe
+potencia_classes <- cut(mtcars$hp, classe, right = FALSE) 
+potencia_tabela <- as.data.frame(table(potencia_classes))
+names(potencia_tabela) <- c("Potência", "Frequência")
+potencia_tabela$Proporção <- round(potencia_tabela$Frequência/sum(potencia_tabela$Frequência),4)
+potencia_tabela$Porcentagem <- round(potencia_tabela$Proporção*100,4)
+potencia_tabela2 <- data.frame(Potência="Total", Frequência=sum(potencia_tabela$Frequência), Proporção=round(sum(potencia_tabela$Proporção),2),Porcentagem=round(sum(potencia_tabela$Porcentagem),1))
+Tabela_HP <- merge(potencia_tabela,potencia_tabela2, all=T)
+pander(Tabela_HP, caption = 
+        "Frequência da Potência dos Veículos (em HP)")                                 
+```
+
